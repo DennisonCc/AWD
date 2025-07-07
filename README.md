@@ -7,16 +7,12 @@ AWD/
 ├── routes/
 │   ├── userRoutes.js
 │   └── productRoutes.js
-├── modules/
-│   ├── userModule.js
-│   └── productModule.js
 ├── models/
 │   ├── User.js
 │   └── Product.js
-├── config/
-│   └── database.js
 ├── index.js
 ├── package.json
+├── .env
 ├── .env.example
 ├── .gitignore
 └── README.md

@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const userModule = require('../modules/userModule');
+const User = require('../models/User');
 
 // GET /api/users - Obtener todos los usuarios
 router.get('/', async (req, res) => {
     try {
-        const users = await userModule.getAllUsers();
+        const users = await User.find().sort({ createdAt: -1 });
         res.json({
             success: true,
             data: users
@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
 // GET /api/users/:id - Obtener usuario por ID
 router.get('/:id', async (req, res) => {
     try {
-        const user = await userModule.getUserById(req.params.id);
+        const user = await User.findById(req.params.id);
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -43,10 +43,11 @@ router.get('/:id', async (req, res) => {
 // POST /api/users - Crear nuevo usuario
 router.post('/', async (req, res) => {
     try {
-        const newUser = await userModule.createUser(req.body);
+        const user = new User(req.body);
+        const savedUser = await user.save();
         res.status(201).json({
             success: true,
-            data: newUser,
+            data: savedUser,
             message: 'Usuario creado exitosamente'
         });
     } catch (error) {
@@ -60,7 +61,11 @@ router.post('/', async (req, res) => {
 // PUT /api/users/:id - Actualizar usuario
 router.put('/:id', async (req, res) => {
     try {
-        const updatedUser = await userModule.updateUser(req.params.id, req.body);
+        const updatedUser = await User.findByIdAndUpdate(
+            req.params.id, 
+            req.body, 
+            { new: true, runValidators: true }
+        );
         if (!updatedUser) {
             return res.status(404).json({
                 success: false,
@@ -83,8 +88,8 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/users/:id - Eliminar usuario
 router.delete('/:id', async (req, res) => {
     try {
-        const deleted = await userModule.deleteUser(req.params.id);
-        if (!deleted) {
+        const deletedUser = await User.findByIdAndDelete(req.params.id);
+        if (!deletedUser) {
             return res.status(404).json({
                 success: false,
                 message: 'Usuario no encontrado'

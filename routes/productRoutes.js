@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const productModule = require('../modules/productModule');
+const Product = require('../models/Product');
 
 // GET /api/products - Obtener todos los productos
 router.get('/', async (req, res) => {
     try {
-        const products = await productModule.getAllProducts();
+        const products = await Product.find({ isActive: true }).sort({ createdAt: -1 });
         res.json({
             success: true,
             data: products
@@ -21,7 +21,7 @@ router.get('/', async (req, res) => {
 // GET /api/products/:id - Obtener producto por ID
 router.get('/:id', async (req, res) => {
     try {
-        const product = await productModule.getProductById(req.params.id);
+        const product = await Product.findById(req.params.id);
         if (!product) {
             return res.status(404).json({
                 success: false,
@@ -43,10 +43,11 @@ router.get('/:id', async (req, res) => {
 // POST /api/products - Crear nuevo producto
 router.post('/', async (req, res) => {
     try {
-        const newProduct = await productModule.createProduct(req.body);
+        const product = new Product(req.body);
+        const savedProduct = await product.save();
         res.status(201).json({
             success: true,
-            data: newProduct,
+            data: savedProduct,
             message: 'Producto creado exitosamente'
         });
     } catch (error) {
@@ -60,7 +61,11 @@ router.post('/', async (req, res) => {
 // PUT /api/products/:id - Actualizar producto
 router.put('/:id', async (req, res) => {
     try {
-        const updatedProduct = await productModule.updateProduct(req.params.id, req.body);
+        const updatedProduct = await Product.findByIdAndUpdate(
+            req.params.id, 
+            req.body, 
+            { new: true, runValidators: true }
+        );
         if (!updatedProduct) {
             return res.status(404).json({
                 success: false,
@@ -80,11 +85,15 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// DELETE /api/products/:id - Eliminar producto
+// DELETE /api/products/:id - Eliminar producto (soft delete)
 router.delete('/:id', async (req, res) => {
     try {
-        const deleted = await productModule.deleteProduct(req.params.id);
-        if (!deleted) {
+        const deletedProduct = await Product.findByIdAndUpdate(
+            req.params.id, 
+            { isActive: false }, 
+            { new: true }
+        );
+        if (!deletedProduct) {
             return res.status(404).json({
                 success: false,
                 message: 'Producto no encontrado'
